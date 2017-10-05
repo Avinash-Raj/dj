@@ -52,7 +52,7 @@ class Dj(Base, CreateModelMixin, CreateViewMixin):
                 sys.stderr.write(self.error("Given app name <{}> didn't get installed.\n".format(self.app_name)))
                 self.list_apps()
             self.app_path = os.path.join(self.basedir, *self.app_name.split('.'))
-            assert self.app_path
+            assert os.path.exists(self.app_path)
             if self.mv_arg in ['view', 'v']:
                 self.create_view()
             else:
