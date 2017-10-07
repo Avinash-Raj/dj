@@ -13,12 +13,14 @@ $ python setup.py install
 
 ## To list all installed local apps:
 
-    dj list
-
+```sh
+dj list
+```
 or
 
-    dj l
-
+```sh
+dj l
+```
 
 ## To create a new model:
 
@@ -29,13 +31,19 @@ or
 ```sh
 dj create model <model-name> <app-name>
 ```
+
 we can use `c` for `create` and `m` for model in the above format.
 
 3. The below command will create a new model `Book` inside `student` app.
 
-    dj c m Book student
-
+```sh
+dj c m Book student
+```
 
 ## To create a new view:
 
-    dj c v BookView student
+```sh
+dj c v BookView student
+```
+
+![selection_005](https://user-images.githubusercontent.com/3929632/31307339-2225b692-ab80-11e7-842b-fef686d9c3b7.png)
