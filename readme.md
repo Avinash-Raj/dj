@@ -2,7 +2,7 @@
 
 python cli package for creating django models and views in a single command.
 
-## Install
+### Install
 
 Pull the code from github and install dj through `setup.py`.
 
@@ -11,18 +11,13 @@ $ cd dj
 $ python setup.py install
 ```
 
-## To list all installed local apps:
+### To list all installed local apps:
 
 ```sh
 dj list
 ```
-or
 
-```sh
-dj l
-```
-
-## To create a new model:
+### To create a new model:
 
 1. cd into the django project (ie, into the directory where `manage.py` exists)
 
@@ -40,7 +35,7 @@ we can use `c` for `create` and `m` for model in the above format.
 dj c m Book student
 ```
 
-## To create a new view:
+### To create a new view:
 
 ```sh
 dj c v BookView student
