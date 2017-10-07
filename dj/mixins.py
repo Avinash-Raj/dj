@@ -5,6 +5,11 @@ from subprocess import Popen, PIPE
 
 
 class BaseMixin:
+    def print_files_modified(self):
+        sys.stdout.write(self.notice('Files Changed:\n'))
+        for fil in self.files_modified:
+            sys.stdout.write(self.warn('    {}\n'.format(fil)))
+
     def get_mv_file_path(self, arg):
         m_file = os.path.join(self.app_path, '{}.py'.format(arg))
         m_directory = os.path.join(self.app_path, arg)
@@ -24,54 +29,75 @@ class BaseMixin:
             sys.exit(1)
 
     def camelcase_to_ucase(self, stri):
-        return re.sub(r'(?m)(.|^)([A-Z])', lambda m: '_' + m.group(2).lower() if m.group(1) else m.group(2).lower(), stri)
+        return re.sub(r'(?m)(.|^)([A-Z])', lambda m: m.group(1) + '_' + m.group(2).lower() if m.group(1) else m.group(2).lower(), stri)
 
 
 class CreateModelMixin(BaseMixin):
-    def create_model_urls(self):
+    def apply_model(self):
+        with open(self.model_path, 'a') as f:
+            f.write('''\nclass {}(models.Model):\n    pass\n'''.format(self.mv_name_arg))
+        sys.stdout.write(self.success('New {} model created successfully!\n'.format(self.mv_name_arg)))
+        # append models.py file path to modified_files
+        self.files_modified.append(self.model_path)
+
+    def create_model(self):
+        self.model_path = self.get_mv_file_path('models')
+        self.check_mv_name_already_exists_or_not(self.model_path, 'Model')
+        self.apply_model()
+        self.print_files_modified()
+
+
+class CreateViewMixin(BaseMixin):
+    def get_view_import_stmt(self):
+        return 'from .{} import {}'.format(self.view_path.replace(self.app_path+os.path.sep, '').rstrip('.py').replace('/', '.'),self.mv_name_arg)
+
+    def get_view_url_stmt(self):
+        return "    url(r'^{name}/$', {class_name}.as_view(), name='{name}'),".format(name=self.camelcase_to_ucase(self.mv_name_arg), class_name=self.mv_name_arg)
+
+    def create_view_urls(self):
         url_lines = [
                 'from django.conf.urls import url',
-                'from .{} import {}'.format(self.model_path.replace(self.app_path+os.path.sep, '').rstrip('.py').replace('/', '.'), self.mv_name_arg),
+                self.get_view_import_stmt(),
                 '\n',
                 'urlpatterns = [',
-                "    url(r'^{name}/$', {class_name}.as_view(), name='{name}'),".format(name=self.camelcase_to_ucase(self.mv_name_arg), class_name=self.mv_name_arg),
+                self.get_view_url_stmt(),
                 ']\n'
         ]
 
         with open(self.url_file_path, 'w') as w:
             w.write('\n'.join(url_lines))
-        sys.stdout.write(self.success('{} created successfully!\n'.format(self.url_file_path)))
+        sys.stdout.write(self.success('New urls created successfully!\n'))
 
-    def apply_model(self):
-        with open(self.model_path, 'a') as f:
-            f.write('''\nclass {}(models.Model):\n    pass\n'''.format(self.mv_name_arg))
-        sys.stdout.write(self.success('New {} model created successfully!\n'.format(self.mv_name_arg)))
-        # TODO: make changes in urls.py
-        # check urls.py exists or not
+    def append_view_url(self):
+        # Check import stmt for generic class exists or not
+        cmd = """sed -i "/^\(from\|import\)/{{:a;n;/^$/!ba;s/.*/{}\\n/}};s~\]~{}\\n]~" {}""".format(
+                            self.get_view_import_stmt(), self.get_view_url_stmt(), self.url_file_path)
+
+        proc = Popen(cmd, shell=True, stderr=PIPE, stdout=PIPE)
+        succ, err = proc.communicate()
+        if err:
+            sys.stderr.write(self.error(str(err)+'\n'))
+            sys.exit(1)
+        sys.stdout.write(self.success('URLs modified successfully!\n'))
+
+    def apply_view(self):
+        with open(self.view_path, 'a') as f:
+            f.write('''\nclass {}(generics.View):\n    pass\n'''.format(self.mv_name_arg))
+        sys.stdout.write(self.success('New {} View created successfully!\n'.format(self.mv_name_arg)))
+        self.files_modified.append(self.view_path)
+        # Append the url
         self.url_file_path = os.path.join(self.app_path, 'urls.py')
         if os.path.exists(os.path.join(self.url_file_path)):
-            # self.url_file_path = 
-            pass
+            self.append_view_url()
         elif os.path.exists(os.path.join(self.app_path, 'urls', '__init__.py')):
             self.url_file_path = os.path.join(self.app_path, 'urls', '__init__.py')
+            self.append_view_url()
         else:
-            self.create_model_urls()
-        # proc = Popen('ls -l', shell=True, stdout=PIPE, stderr=PIPE)
-        # succ, err = proc.communicate()
-
-    def create_model(self):
-        self.model_path = self.get_mv_file_path('models')
-        # self.url_path = self.get_mv_file_path('urls')
-        self.check_mv_name_already_exists_or_not(self.model_path, 'Model')
-        self.apply_model()
-
-
-class CreateViewMixin(BaseMixin):
-    def apply_view(self):
-        # TODO: fill this
-        pass
+            self.create_view_urls()
+        self.files_modified.append(self.url_file_path)
 
     def create_view(self):
         self.view_path = self.get_mv_file_path('views')
-        self.check_mv_name_already_exists_or_not(self.model_path, 'View')
+        self.check_mv_name_already_exists_or_not(self.view_path, 'View')
         self.apply_view()
+        self.print_files_modified()

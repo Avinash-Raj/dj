@@ -18,6 +18,7 @@ class Dj(Base, CreateModelMixin, CreateViewMixin):
         self.basedir = os.getcwd()
         self.sub_command = 'help'
         self.commands = ['model', 'view']
+        self.files_modified = []
         color = color_style()
         self.notice = color.NOTICE
         self.error = color.ERROR
