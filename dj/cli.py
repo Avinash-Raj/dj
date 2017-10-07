@@ -27,6 +27,8 @@ class Dj(Base, CreateModelMixin, CreateViewMixin):
 
     def identify_arguments(self):
         if self.args_len == 2:
+            if self.args[1] in ['l', 'list']:
+                self.get_and_list_installed_apps()
             # if first argument not of c or create
             self.check_func_arg(self.args[1])
             self.show_help()

@@ -16,6 +16,7 @@ class Base(object):
         usage = [color_style().NOTICE('[dj]')]
         if self.sub_command == 'help':
             usage.append('    create')
+            usage.append('    list')
         elif self.sub_command in ['v', 'view']:
             usage.append('    create view <view_name> <app_name>')
         elif self.sub_command in ['m', 'model']:
@@ -78,3 +79,8 @@ class Base(object):
                 if os.path.exists(os.path.join(self.basedir, app_name.split('.')[0])):
                     apps.append(app_name)
         return apps
+
+    def get_and_list_installed_apps(self):
+        self.settings_path = self.get_settings_path()
+        self.installed_apps = self.get_installed_apps()
+        self.list_apps()
