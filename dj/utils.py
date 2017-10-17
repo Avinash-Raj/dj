@@ -19,6 +19,13 @@ class Base(object):
             usage.append('    list')
         elif self.sub_command in ['v', 'view']:
             usage.append('    create view <view_name> <app_name>')
+            usage.append('    create view <view_name> <app_name> <options>')
+            usage.append(self.notice('options:'))
+            usage.append('    C -> Create')
+            usage.append('    U -> Update')
+            usage.append('    R -> Retrieve')
+            usage.append('    D -> Delete')
+            usage.append('    L -> List')
         elif self.sub_command in ['m', 'model']:
             usage.append('    create model <model_name> <app_name>')
         else:
@@ -84,3 +91,7 @@ class Base(object):
         self.settings_path = self.get_settings_path()
         self.installed_apps = self.get_installed_apps()
         self.list_apps()
+    
+    @classmethod
+    def check_import_stmt(file_path, stmt):
+        pass

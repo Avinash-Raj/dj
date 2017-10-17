@@ -1,7 +1,14 @@
 import os
 import sys
 import re
+from .utils import Base
 from subprocess import Popen, PIPE
+
+try:
+    import rest_framework
+    REST = True
+except:
+    REST = False
 
 
 class BaseMixin:
@@ -80,6 +87,22 @@ class CreateViewMixin(BaseMixin):
             sys.exit(1)
         sys.stdout.write(self.success('URLs modified successfully!\n'))
 
+    def identify_options(self):
+        #if rest framework installed then use rest's import stmt
+        # else use django's import stmt
+        # stmts = []
+        # if REST:
+        #     # check for whether the CURD options specified or not
+        #     if self.options:
+        #         if len(self.options) == 5:
+        pass
+
+
+    def add_view_class(self):
+        # TODO: add import stmt based upon the curd
+        # is_import_stmt_exists = Base.check_import_stmt(self.view_path,'from django.views.generic import ')
+        pass
+
     def apply_view(self):
         with open(self.view_path, 'a') as f:
             f.write('''\nclass {}(generics.View):\n    pass\n'''.format(self.mv_name_arg))
@@ -97,6 +120,7 @@ class CreateViewMixin(BaseMixin):
         self.files_modified.append(self.url_file_path)
 
     def create_view(self):
+        self.rest = REST
         self.view_path = self.get_mv_file_path('views')
         self.check_mv_name_already_exists_or_not(self.view_path, 'View')
         self.apply_view()

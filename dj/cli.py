@@ -1,5 +1,4 @@
 import os
-import re
 import sys
 
 try:
@@ -25,6 +24,14 @@ class Dj(Base, CreateModelMixin, CreateViewMixin):
         self.warn = color.WARNING
         self.success = color.SUCCESS
 
+    def check_app_name(self):
+        self.app_name = self.args[4]
+        if self.app_name not in self.installed_apps:
+            sys.stderr.write(self.error("Given app name <{}> didn't get installed.\n".format(self.app_name)))
+            self.list_apps()
+        self.app_path = os.path.join(self.basedir, *self.app_name.split('.'))
+        assert os.path.exists(self.app_path)
+
     def identify_arguments(self):
         if self.args_len == 2:
             if self.args[1] in ['l', 'list']:
@@ -49,21 +56,29 @@ class Dj(Base, CreateModelMixin, CreateViewMixin):
             # installed local apps
             sys.stderr.write(self.error('Please choose an appname!\n'))
             self.list_apps()
+        # create model or view
+        self.check_app_name()
         if self.args_len == 5:
-            self.app_name = self.args[4]
-            if self.app_name not in self.installed_apps:
-                sys.stderr.write(self.error("Given app name <{}> didn't get installed.\n".format(self.app_name)))
-                self.list_apps()
-            self.app_path = os.path.join(self.basedir, *self.app_name.split('.'))
-            assert os.path.exists(self.app_path)
             if self.mv_arg in ['view', 'v']:
                 self.create_view()
             else:
                 self.create_model()
+            sys.exit(1)
+        # create view aith CURD options
+        self.options = self.args[5]
+        if self.args_len == 6 and self.mv_arg in ['view', 'v']:
+            # check for the options is a subset of CURDL
+            if not set(self.options).issubset(set('CURDL')):
+                sys.stderr.write(self.error('Unknown options {}\n'.format(self.options)))
+                self.sub_command = 'v'
+                self.show_help()
+            self.create_view()
 
     def execute(self):
         if self.args_len == 1:
             self.show_help()
+            return
+        if self.args_len > 6:
             return
         self.sub_command = self.args[1]
         self.identify_arguments()
